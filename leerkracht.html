@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Klokkrak · voor de leerkracht</title>
+<link rel="stylesheet" href="klokkrak.css">
+<meta name="color-scheme" content="only light">
+<meta name="theme-color" content="#FFC233">
+</head>
+<body>
+
+<main class="gen" id="screenGen">
+  <header class="gen__head">
+    <div class="logo logo--klok" aria-hidden="true"><span>🕐</span></div>
+    <div>
+      <h1 class="gen__title">Klokkrak</h1>
+      <p class="gen__sub">Maak een klokoefening op maat en deel ze met een QR-code of link.</p>
+    </div>
+  </header>
+
+  <div class="layout">
+    <section class="panel" aria-label="Instellingen">
+      <div class="block">
+        <p class="block__label">Oefenmodus</p>
+        <div class="chips" id="session">
+          <button class="chip chip--wide" data-k="self" aria-pressed="true" type="button">🧒 Zelf oefenen</button>
+          <button class="chip chip--wide" data-k="class" aria-pressed="false" type="button">👩‍🏫 Samen oefenen</button>
+        </div>
+        <p class="note" id="sessionNote" style="margin-top:10px"></p>
+      </div>
+      <div id="settingsHost"></div>
+    </section>
+
+    <aside class="out">
+      <div class="qrcard">
+        <div class="qrwrap" id="qr" aria-label="QR-code"></div>
+        <p class="qrcard__cap">Scan met een tablet of gsm</p>
+        <div class="summary" id="summary"></div>
+        <div class="linkrow">
+          <input id="link" type="text" readonly aria-label="Link naar de oefening">
+          <button class="btn btn--sun" id="copy" type="button">Kopieer</button>
+        </div>
+        <button class="btn btn--grass btn--block" id="tryit" type="button">▶ Probeer zelf</button>
+        <button class="btn btn--ghost btn--block" id="printqr" type="button">🖨️ QR afdrukken</button>
+        <p class="note" id="hostnote"></p>
+        <p class="note note--go">Deze leerlijn volgt de <b>GO!-visietekst kloklezen</b>: eerst absoluut lezen
+        ("X uur Y minuten"), de relatieve lezing pas vanaf het derde leerjaar, geen "voor/over het half uur",
+        en geen opdrachten waarbij wijzers getekend moeten worden.</p>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<main class="play hidden" id="screenPlay">
+  <div class="play__top">
+    <div class="stars"><span class="s" id="starIcon">★</span><span id="starCount">0</span></div>
+    <div class="prog"><div class="prog__fill" id="progFill"></div></div>
+    <button class="iconbtn" id="soundBtn" type="button" title="Geluid aan/uit" aria-label="Geluid aan of uit">🔊</button>
+    <button class="iconbtn" id="quitBtn" type="button" title="Stoppen" aria-label="Stoppen">✕</button>
+  </div>
+  <div class="stage" id="stage"></div>
+</main>
+<main class="play hidden" id="screenDone"><div class="results" id="resultsBox"></div></main>
+
+<div class="splash" id="splash" aria-live="polite">
+  <div class="splash__card">
+    <div class="splash__emo" id="splashEmo">🎉</div>
+    <div class="splash__txt" id="splashTxt">Goed zo!</div>
+    <div class="splash__hint" id="splashHint"></div>
+  </div>
+</div>
+<div id="glow"></div>
+<canvas id="confetti"></canvas>
+
+<script src="qrcode.js"></script>
+<script src="engine.js"></script>
+<script>
+(function(){
+"use strict";
+var $=function(s){return document.querySelector(s);};
+var $$=function(s){return Array.prototype.slice.call(document.querySelectorAll(s));};
+var state = KK.defaults();
+
+function fullURL(){
+  var dir=location.href.split("#")[0].replace(/[^\/]*$/,"");
+  var hosted=(location.origin && location.origin!=="null");
+  return dir+(hosted?"":"index.html")+KK.buildHash(state);
+}
+function drawQR(url){
+  var host=$("#qr"); host.innerHTML="";
+  if(typeof qrcode==="undefined"){
+    host.innerHTML='<div class="qrerr">Het bestand <b>qrcode.js</b> is niet geladen.<br>Staat het (met exact die naam) in dezelfde map als deze pagina?</div>';
+    return;
+  }
+  var qr=null;
+  ["M","L"].forEach(function(lv){ if(qr) return; try{ var q=qrcode(0,lv); q.addData(url); q.make(); qr=q; }catch(e){} });
+  if(!qr){ host.innerHTML='<div class="qrerr">Deze link is te lang voor een QR-code. Kies iets minder opties tegelijk.</div>'; return; }
+  var n=qr.getModuleCount(), cell=4, pad=4, size=n*cell+pad*2;
+  var dark=getComputedStyle(document.documentElement).getPropertyValue("--ink").trim()||"#2B2D42";
+  var svg='<svg viewBox="0 0 '+size+' '+size+'" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect width="'+size+'" height="'+size+'" fill="#fff"/><path fill="'+dark+'" d="';
+  for(var r=0;r<n;r++)for(var c=0;c<n;c++){ if(qr.isDark(r,c)){ var x=pad+c*cell,y=pad+r*cell; svg+="M"+x+" "+y+"h"+cell+"v"+cell+"h-"+cell+"z"; } }
+  host.innerHTML=svg+'"/></svg>';
+}
+function summaryPills(){
+  var box=$("#summary"); box.innerHTML="";
+  function add(t){ var s=document.createElement("span"); s.className="pill"; s.textContent=t; box.appendChild(s); }
+  add(KK.GRAAD_LABEL[state.graad]);
+  var labels=state.themes.map(function(id){ var t=KK.themeById(state.graad,id); return t?t.label:null; }).filter(Boolean);
+  add(labels.length>2? labels.length+" onderwerpen" : labels.join(" · "));
+  add("Wijzerplaat: "+KK.FACE_LABEL[state.face]);
+  add(state.seconds? state.seconds+" sec/oefening":"Geen tijdsdruk");
+  add(state.count? state.count+" oefeningen":"Oneindig");
+  add(state.session==="class"?"Klassikaal":"Zelfstandig");
+}
+function applySessionUI(){
+  var cls=state.session==="class";
+  $("#sessionNote").innerHTML = cls
+    ? "Voor op het digibord: toon de klok, laat handen opsteken en toon dan samen het antwoord. Ideaal voor het dagelijkse klokmoment."
+    : "Elk kind oefent op een eigen tablet of gsm.";
+  $("#tryit").textContent = cls? "▶ Start klasoefening" : "▶ Probeer zelf";
+  $$("#session .chip").forEach(function(x){ x.setAttribute("aria-pressed",(x.dataset.k==="class")===cls); });
+}
+function sync(){ drawQR(fullURL()); $("#link").value=fullURL(); summaryPills(); applySessionUI(); }
+
+var settings = KK.makeSettings($("#settingsHost"), state, sync);
+
+$$("#session .chip").forEach(function(b){ b.onclick=function(){ state.session=b.dataset.k; sync(); }; });
+$("#copy").onclick=function(){
+  var inp=$("#link"); inp.select(); inp.setSelectionRange(0,99999);
+  var done=function(){ var b=$("#copy"); b.textContent="Gekopieerd ✓"; b.classList.add("copied"); setTimeout(function(){b.textContent="Kopieer";b.classList.remove("copied");},1800); };
+  if(navigator.clipboard) navigator.clipboard.writeText(inp.value).then(done,function(){try{document.execCommand("copy");done();}catch(e){}});
+  else { try{document.execCommand("copy");done();}catch(e){} }
+};
+$("#tryit").onclick=function(){ KK.resumeAudio(); KK.startGame(JSON.parse(JSON.stringify(state))); };
+$("#printqr").onclick=function(){ window.print(); };
+$("#soundBtn").onclick=function(){ KK.toggleSound(); };
+function back(){ $("#screenPlay").classList.add("hidden"); $("#screenDone").classList.add("hidden"); $("#screenGen").classList.remove("hidden"); window.scrollTo(0,0); }
+$("#quitBtn").onclick=back;
+KK.setOnExit(back);
+
+var hosted=(location.origin && location.origin!=="null");
+$("#hostnote").innerHTML = hosted
+  ? '<b>Zo werkt het:</b> de QR-code en link openen de <b>leerlingapp</b> met precies deze oefening erin. Deel ze met je leerlingen — geen login nodig.'
+  : '<b>Tip:</b> zet <b>index.html</b> en <b>leerkracht.html</b> samen online (bv. GitHub Pages). Met "Probeer zelf" test je de oefening nu al volledig.';
+
+var fromHash=KK.parseParams(location.hash);
+if(fromHash){ for(var k in fromHash) state[k]=fromHash[k]; settings.sync(); }
+sync();
+})();
+</script>
+</body>
+</html>

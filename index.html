@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Klokkrak</title>
+<link rel="stylesheet" href="klokkrak.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="color-scheme" content="only light">
+<meta name="theme-color" content="#FFC233">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Klokkrak">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+</head>
+<body>
+
+<!-- ===================== WELKOM ===================== -->
+<main class="home" id="screenHome">
+  <div class="home__logo home__logo--klok" aria-hidden="true"><span>🕐</span></div>
+  <h1 class="home__title">Klokkrak</h1>
+  <p class="home__sub">Word een krak in klokkijken!</p>
+  <div class="home__cards">
+    <button class="bigcard bigcard--self" id="goSelf" type="button">
+      <span class="bigcard__ic" aria-hidden="true">⏰</span>
+      <span class="bigcard__tx"><b>Zelf oefenen</b><span>Kies je graad en je onderwerpen zelf</span></span>
+    </button>
+    <button class="bigcard bigcard--scan" id="goScan" type="button">
+      <span class="bigcard__ic" aria-hidden="true">📷</span>
+      <span class="bigcard__tx"><b>Scan een QR-code van de juf/meester</b><span>Open meteen jouw oefening</span></span>
+    </button>
+  </div>
+</main>
+
+<!-- ===================== SETUP ===================== -->
+<main class="setup hidden" id="screenSetup">
+  <div class="setup__head">
+    <button class="backbtn" id="setupBack" type="button" aria-label="Terug">←</button>
+    <h2 class="setup__title">Zelf oefenen</h2>
+  </div>
+  <section class="panel">
+    <div id="settingsHost"></div>
+    <button class="btn btn--grass btn--block" id="startSelf" type="button" style="margin-top:6px;font-size:17px;padding:16px">▶ Starten</button>
+  </section>
+</main>
+
+<!-- ===================== QR-SCANNER ===================== -->
+<main class="scan hidden" id="screenScan">
+  <video class="scan__video" id="scanVideo" playsinline muted></video>
+  <div class="scan__overlay" id="scanOverlay">
+    <div class="scan__msg">Richt op de QR-code<br>van de juf/meester</div>
+    <div class="scan__frame"><div class="scan__corner2"></div></div>
+    <div class="scan__hint" id="scanHint">Houd de code rustig in het kader</div>
+  </div>
+  <div class="scan__err hidden" id="scanErr">
+    <div style="font-size:58px" aria-hidden="true">📷</div>
+    <b id="scanErrMsg"></b>
+    <span>Vraag de juf of meester om de oefening anders via de link te openen.</span>
+  </div>
+  <button class="scan__close" id="scanClose" type="button">← Terug</button>
+  <canvas id="scanCanvas" class="hidden"></canvas>
+</main>
+
+<!-- ===================== SPELER ===================== -->
+<main class="play hidden" id="screenPlay">
+  <div class="play__top">
+    <div class="stars"><span class="s" id="starIcon">★</span><span id="starCount">0</span></div>
+    <div class="prog"><div class="prog__fill" id="progFill"></div></div>
+    <button class="iconbtn" id="soundBtn" type="button" title="Geluid aan/uit" aria-label="Geluid aan of uit">🔊</button>
+    <button class="iconbtn" id="quitBtn" type="button" title="Stoppen" aria-label="Stoppen">✕</button>
+  </div>
+  <div class="stage" id="stage"></div>
+</main>
+<main class="play hidden" id="screenDone"><div class="results" id="resultsBox"></div></main>
+
+<div class="splash" id="splash" aria-live="polite">
+  <div class="splash__card">
+    <div class="splash__emo" id="splashEmo">🎉</div>
+    <div class="splash__txt" id="splashTxt">Goed zo!</div>
+    <div class="splash__hint" id="splashHint"></div>
+  </div>
+</div>
+<div id="glow"></div>
+<canvas id="confetti"></canvas>
+
+<script src="jsqr.js"></script>
+<script src="engine.js"></script>
+<script>
+(function(){
+"use strict";
+var $=function(s){return document.querySelector(s);};
+var SETUP = KK.defaults();
+
+function hideAll(){ ["#screenHome","#screenSetup","#screenScan","#screenPlay","#screenDone"].forEach(function(id){ $(id).classList.add("hidden"); }); }
+function showHome(){ hideAll(); $("#screenHome").classList.remove("hidden"); window.scrollTo(0,0); }
+function goHome(){ stopScan(); if(location.hash){ history.replaceState(null,"",location.pathname+location.search); } showHome(); }
+function showSetup(){ KK.resumeAudio(); hideAll(); $("#screenSetup").classList.remove("hidden"); window.scrollTo(0,0); }
+
+KK.makeSettings($("#settingsHost"), SETUP, function(){});
+KK.setOnExit(goHome);
+
+/* Bij "Zelf oefenen" kan het kind altijd terug; bij een oefening van de
+   juf/meester pas als ze helemaal af is (behalve bij een oneindige reeks). */
+function setQuit(v){ $("#quitBtn").classList.toggle("hidden", !v); }
+$("#goSelf").onclick=showSetup;
+$("#goScan").onclick=startScan;
+$("#setupBack").onclick=showHome;
+$("#startSelf").onclick=function(){ setQuit(true); KK.startGame(JSON.parse(JSON.stringify(SETUP))); };
+$("#scanClose").onclick=goHome;
+$("#soundBtn").onclick=function(){ KK.toggleSound(); };
+$("#quitBtn").onclick=goHome;
+
+/* ---------- QR-scanner ---------- */
+var stream=null, raf=null, vid, cvs, ctx;
+function startScan(){
+  KK.resumeAudio(); hideAll(); $("#screenScan").classList.remove("hidden");
+  $("#scanErr").classList.add("hidden"); $("#scanOverlay").classList.remove("hidden");
+  $("#scanHint").textContent="Houd de code rustig in het kader";
+  vid=$("#scanVideo"); cvs=$("#scanCanvas"); ctx=cvs.getContext("2d",{willReadFrequently:true});
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.jsQR) return scanError("Scannen werkt hier niet.");
+  navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"}},audio:false})
+    .then(function(s){ stream=s; vid.srcObject=s; vid.setAttribute("playsinline",""); return vid.play(); })
+    .then(function(){ raf=requestAnimationFrame(loop); })
+    .catch(function(err){
+      scanError((err&&(err.name==="NotAllowedError"||err.name==="SecurityError"))
+        ? "Geef toestemming voor de camera om te kunnen scannen." : "De camera kon niet starten.");
+    });
+}
+function loop(){
+  if(!stream) return;
+  if(vid.readyState===vid.HAVE_ENOUGH_DATA){
+    var w=vid.videoWidth, h=vid.videoHeight;
+    if(w&&h){
+      cvs.width=w; cvs.height=h; ctx.drawImage(vid,0,0,w,h);
+      var img=null; try{ img=ctx.getImageData(0,0,w,h); }catch(e){}
+      if(img){
+        var code=jsQR(img.data,w,h,{inversionAttempts:"dontInvert"});
+        if(code && code.data){
+          var cfg=KK.parseParams(code.data);
+          if(cfg){ cfg.session="self"; if(navigator.vibrate) navigator.vibrate(60); stopScan(); setQuit(cfg.count===0); KK.startGame(cfg); return; }
+          $("#scanHint").textContent="Dat is geen Klokkrak-code 🤔";
+        }
+      }
+    }
+  }
+  raf=requestAnimationFrame(loop);
+}
+function stopScan(){
+  if(raf){ cancelAnimationFrame(raf); raf=null; }
+  if(stream){ stream.getTracks().forEach(function(t){t.stop();}); stream=null; }
+  if(vid) vid.srcObject=null;
+  $("#screenScan").classList.add("hidden");
+}
+function scanError(msg){ $("#scanErrMsg").textContent=msg; $("#scanOverlay").classList.add("hidden"); $("#scanErr").classList.remove("hidden"); }
+
+/* ---------- service worker ---------- */
+if("serviceWorker" in navigator){ window.addEventListener("load",function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
+
+/* ---------- opstarten ---------- */
+var cfg=KK.parseParams(location.hash);
+if(cfg){ cfg.session="self"; setQuit(cfg.count===0); KK.startGame(cfg); } else showHome();
+})();
+</script>
+</body>
+</html>
