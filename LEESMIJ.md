@@ -20,8 +20,8 @@ Precies zoals bij de Rekenkrak en de Taalkrak: alle bestanden in één map op Gi
 1. Repo → **Settings** → **Pages**.
 2. Bij *Source*: **Deploy from a branch** → branch **main**, map **/ (root)** → **Save**.
 3. Na een minuutje staat de site op:
-   - Leerlingen: `https://jellebraum-dotcom.github.io/klokkrak/`
-   - Leerkracht: `https://jellebraum-dotcom.github.io/klokkrak/leerkracht.html`
+   - Leerlingen: `https://oefenkrak.be/klokkrak/`
+   - Leerkracht: `https://oefenkrak.be/klokkrak/leerkracht.html`
 
 ## 4. Op de iPads zetten
 
