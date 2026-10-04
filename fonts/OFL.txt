@@ -1,0 +1,3 @@
+Nunito Variable and Fredoka Variable are licensed under the SIL Open Font License 1.1.
+https://openfontlicense.org
+Sources: @fontsource-variable/nunito, @fontsource-variable/fredoka
