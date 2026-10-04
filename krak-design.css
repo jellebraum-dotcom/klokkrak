@@ -1,0 +1,209 @@
+/* =====================================================================
+   Oefenkrak design layer — shared by Rekenkrak, Taalkrak and Klokkrak.
+   Loaded AFTER the app's own stylesheet. It only restyles: no layout
+   logic, no class names that JavaScript depends on are changed.
+   To roll back: remove the <link> to this file.
+   ===================================================================== */
+
+@font-face{font-family:"Nunito Krak";src:url("fonts/nunito.woff2") format("woff2");
+  font-weight:200 1000;font-style:normal;font-display:swap}
+@font-face{font-family:"Fredoka Krak";src:url("fonts/fredoka.woff2") format("woff2");
+  font-weight:300 700;font-style:normal;font-display:swap}
+
+:root{
+  --font:"Nunito Krak",ui-rounded,"SF Pro Rounded","Segoe UI",Roboto,system-ui,sans-serif;
+  --font-display:"Fredoka Krak","Nunito Krak",ui-rounded,system-ui,sans-serif;
+
+  --ink:#25273C; --ink-soft:#5F6178;
+  --paper:#FFF8EC; --card:#FFFFFF;
+  --line:#ECE2D0; --line-deep:#DCCDB3;
+  --cream:#F7F0E3; --cream-deep:#E6DAC4;
+
+  --sun:#FFC233; --sun-deep:#E59A00;
+  --grass:#3BB56A; --grass-deep:#26874B;
+  --berry:#EC5A72; --berry-deep:#C63A54;
+  --sky:#3FB4EC; --sky-deep:#1F8CC4;
+  --plum:#7B5EA7;
+
+  /* the app's brand colour (overridden per app via html[data-krak]) */
+  --accent:var(--sun); --accent-deep:var(--sun-deep); --accent-soft:#FFF0C7;
+
+  /* crisp "lip" shadows instead of blurry drop shadows */
+  --shadow:0 4px 0 var(--line-deep), 0 10px 24px rgba(60,45,20,.06);
+  --shadow-sm:0 3px 0 var(--line-deep);
+  --round:24px;
+}
+html[data-krak="taal"]{--accent:var(--grass);--accent-deep:var(--grass-deep);--accent-soft:#DDF4E5}
+html[data-krak="klok"]{--accent:var(--sky);--accent-deep:var(--sky-deep);--accent-soft:#DDF1FB}
+
+/* ---------- page background: calm paper with a soft dot grid ---------- */
+html{
+  background-color:var(--paper);
+  background-image:radial-gradient(rgba(150,120,70,.11) 1.3px, transparent 1.6px);
+  background-size:22px 22px;
+}
+body{background:transparent !important;font-family:var(--font);color:var(--ink);font-weight:600}
+
+/* ---------- typography ---------- */
+.home__title,.gen__title,.setup__title,.results h2,.splash__txt,.wachtkamer__titel,
+.review h3,.medal + h2{font-family:var(--font-display);font-weight:600;letter-spacing:-.01em}
+.home__title{font-size:clamp(38px,10vw,52px)}
+.home__sub{font-size:16px;font-weight:700;color:var(--ink-soft);margin-top:-8px}
+.block__label{font-family:var(--font-display);font-weight:600;font-size:17px;letter-spacing:0}
+.gen .block__label{font-size:17.5px}
+
+/* digits and answer tiles: big, friendly, very legible */
+.tile,.key,.choice,.ttile,.opbtn__s,.stars,.bd b,.results .score,.prog,
+.clock__num,.form-opt__demo,.codeinput{font-family:var(--font-display)}
+.tile,.ttile,.key,.choice{font-weight:600}
+.codeinput{font-weight:600 !important}
+
+/* ---------- tactile 3D press, shared by all pressables ---------- */
+.bigcard,.btn,.key,.choice,.chip,.opbtn,.dombtn,.form-opt,.iconbtn,.backbtn,.hulpknop,
+.bigbtn,.clockopt,.tinybtn,.speakbtn,.scan__close{
+  transition:transform .08s ease, box-shadow .08s ease, background-color .15s, border-color .15s, color .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+@media (hover:hover){
+  .bigcard:hover,.key:hover,.choice:hover,.chip:hover,.opbtn:hover,.dombtn:hover,.form-opt:hover,
+  .iconbtn:hover,.backbtn:hover,.hulpknop:hover,.btn:hover,.bigbtn:hover,.clockopt:hover{filter:none;transform:translateY(-1px)}
+}
+
+/* ---------- home screen ---------- */
+.home{gap:20px;padding-top:40px;padding-bottom:40px}
+.home__logo{width:96px;height:96px;border-radius:30px;
+  box-shadow:0 5px 0 var(--sun-deep), 0 0 0 12px #FFF0C7, 0 18px 34px rgba(60,45,20,.10);
+  margin-bottom:10px}
+.home__logo--klok{box-shadow:0 5px 0 var(--sky-deep), 0 0 0 12px #DDF1FB, 0 18px 34px rgba(60,45,20,.10)}
+.home__cards{gap:14px}
+.bigcard{position:relative;padding:18px 48px 18px 18px;border-radius:24px;background:var(--card);
+  border:2px solid var(--line);box-shadow:0 5px 0 var(--line-deep)}
+.bigcard:active{transform:translateY(4px);box-shadow:0 1px 0 var(--line-deep)}
+.bigcard::after{content:"";position:absolute;right:22px;top:50%;width:10px;height:10px;
+  border-top:3px solid var(--line-deep);border-right:3px solid var(--line-deep);border-radius:2px;
+  transform:translateY(-50%) rotate(45deg);transition:border-color .15s, right .15s}
+@media (hover:hover){.bigcard:hover::after{border-color:var(--ink-soft);right:18px}}
+.bigcard__ic{width:58px;height:58px;border-radius:18px;font-size:28px;color:#fff}
+.bigcard__ic svg{width:30px;height:30px;display:block}
+.home .bigcard--self .bigcard__ic{background:var(--grass);box-shadow:0 3px 0 var(--grass-deep)}
+.home .bigcard--code .bigcard__ic{background:var(--sun);box-shadow:0 3px 0 var(--sun-deep);color:#5A3E00}
+.home .bigcard--scan .bigcard__ic{background:var(--sky);box-shadow:0 3px 0 var(--sky-deep)}
+.bigcard__tx b{font-family:var(--font-display);font-weight:600;font-size:20px;letter-spacing:0}
+.bigcard__tx span{font-size:13.5px;font-weight:700}
+
+.home__hulp{gap:10px;margin-top:6px}
+.hulpknop{border:2px solid var(--line);box-shadow:var(--shadow-sm);border-radius:14px;padding:10px 15px;
+  font-size:14px;color:var(--ink-soft);gap:7px}
+.hulpknop svg{width:18px;height:18px;flex:none}
+.hulpknop:active{transform:translateY(3px);box-shadow:0 0 0 var(--line-deep)}
+
+/* ---------- panels ---------- */
+.panel,.qrcard{border:2px solid var(--line);box-shadow:var(--shadow);border-radius:var(--round)}
+.block{border-top:2px dashed var(--line)}
+.block:first-child{border-top:none}
+
+/* chips, option buttons */
+.chip,.opbtn,.dombtn,.form-opt,.tinybtn{background:var(--card);border:2px solid var(--line);box-shadow:0 3px 0 var(--line-deep)}
+.chip{border-radius:14px}
+.chip:active,.opbtn:active,.dombtn:active,.form-opt:active,.tinybtn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--line-deep)}
+.chip[aria-pressed="true"],.opbtn[aria-pressed="true"],.dombtn[aria-pressed="true"]{
+  background:var(--sky);border-color:var(--sky-deep);color:#fff;box-shadow:0 3px 0 var(--sky-deep)}
+.form-opt[aria-pressed="true"]{background:#EAF8EF;border-color:var(--grass);box-shadow:0 3px 0 var(--grass-deep)}
+.form-opt__demo{border:2px solid var(--line);font-weight:600}
+.tinybtn{color:var(--ink-soft)}
+.pill,.vraag__tag,.themetag,.review__count{background:var(--cream);color:var(--ink-soft);border:1.5px solid var(--line)}
+
+/* ---------- buttons ---------- */
+.btn{border-radius:16px;font-weight:800;letter-spacing:.005em}
+.btn--grass{background:var(--grass);color:#fff;box-shadow:0 4px 0 var(--grass-deep)}
+.btn--sun{background:var(--sun);color:#4A3300;box-shadow:0 4px 0 var(--sun-deep)}
+.btn--ghost{background:var(--cream);color:var(--ink);box-shadow:0 4px 0 var(--cream-deep)}
+.btn:active{transform:translateY(3px)}
+.btn--grass:active{box-shadow:0 1px 0 var(--grass-deep)}
+.btn--sun:active{box-shadow:0 1px 0 var(--sun-deep)}
+.btn--ghost:active{box-shadow:0 1px 0 var(--cream-deep)}
+.btn--block{margin-top:14px}
+
+.bigbtn{border-radius:18px}
+.bigbtn--rev{background:var(--sun);color:#4A3300;box-shadow:0 5px 0 var(--sun-deep)}
+.bigbtn--next{background:var(--grass);color:#fff;box-shadow:0 5px 0 var(--grass-deep)}
+.bigbtn--prev{background:var(--cream);box-shadow:0 5px 0 var(--cream-deep)}
+.bigbtn:active{transform:translateY(4px);box-shadow:0 1px 0 rgba(0,0,0,.15)}
+
+/* small square buttons */
+.iconbtn,.backbtn{border:2px solid var(--line);box-shadow:0 3px 0 var(--line-deep);border-radius:14px}
+.iconbtn:active,.backbtn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--line-deep)}
+
+/* ---------- inputs ---------- */
+.naaminput,.spellinput,.linkrow input{border:2px solid var(--line) !important;border-radius:16px;
+  background:#fff;box-shadow:inset 0 2px 0 rgba(60,45,20,.04)}
+.naaminput:focus,.spellinput:focus{outline:none;border-color:var(--sky) !important;box-shadow:0 0 0 4px rgba(63,180,236,.18)}
+.spellinput.wrong{border-color:var(--berry) !important}
+
+/* ---------- player ---------- */
+.play__top{gap:14px;padding-top:18px}
+.prog{height:16px;background:#EDE3D1;box-shadow:inset 0 2px 0 rgba(60,45,20,.07)}
+.prog__fill{background:var(--grass);position:relative}
+.prog__fill::after{content:"";position:absolute;left:8px;right:8px;top:3px;height:4px;border-radius:99px;background:rgba(255,255,255,.35)}
+.stars{font-weight:600;font-size:20px}
+
+.tile,.ttile,.wtile{border:2px solid var(--line);box-shadow:0 4px 0 var(--line-deep);border-radius:18px}
+.tile.op{box-shadow:none;border:none}
+.tile.blank,.ttile--blank,.wtile--blank{box-shadow:none}
+.tile.blank.filled,.ttile--blank.filled,.wtile--blank.filled{box-shadow:0 4px 0 var(--line-deep)}
+.wtile--secret{box-shadow:none}
+
+.key{border:2px solid var(--line);box-shadow:0 4px 0 var(--line-deep);border-radius:18px}
+.key:active{transform:translateY(3px);box-shadow:0 1px 0 var(--line-deep);background:#FFFCF6}
+.key--act{background:var(--grass);border-color:var(--grass);box-shadow:0 4px 0 var(--grass-deep);color:#fff}
+.key--act:active{background:var(--grass);box-shadow:0 1px 0 var(--grass-deep)}
+.key--del{background:var(--cream);border-color:var(--cream);box-shadow:0 4px 0 var(--cream-deep)}
+
+.choice,.clockopt{border:2px solid var(--line);box-shadow:0 4px 0 var(--line-deep);border-radius:20px}
+.choice:active,.clockopt:active{transform:translateY(3px);box-shadow:0 1px 0 var(--line-deep)}
+.choice.good,.clockopt.good{background:#E6F7EC;border-color:var(--grass);color:var(--grass-deep);box-shadow:0 4px 0 var(--grass)}
+.choice.bad,.clockopt.bad{background:#FDECEF;border-color:var(--berry);color:var(--berry-deep);box-shadow:0 4px 0 var(--berry)}
+
+.speakbtn{background:var(--sky);box-shadow:0 5px 0 var(--sky-deep);border:none}
+.speakbtn:active{transform:translateY(4px);box-shadow:0 1px 0 var(--sky-deep)}
+
+.ring__track{stroke:#EDE3D1}
+
+/* feedback popup */
+.splash__card{border:2px solid var(--line);box-shadow:0 6px 0 var(--line-deep), 0 24px 50px rgba(60,45,20,.14);border-radius:28px}
+
+/* results */
+.bd{border:2px solid var(--line);box-shadow:0 3px 0 var(--line-deep);border-radius:16px}
+.review__row{border:2px solid var(--line);box-shadow:0 3px 0 var(--line-deep)}
+.review__row--bad{border-color:#F4C3CC;box-shadow:0 3px 0 #EBA9B5}
+
+/* waiting room */
+.wachtkamer__emo{width:112px;height:112px;border-radius:36px;display:grid;place-items:center;background:var(--card);
+  border:2px solid var(--line);box-shadow:0 5px 0 var(--line-deep);margin-bottom:14px}
+
+/* ---------- teacher page ---------- */
+.gen__head{background:#2B2D45;border-radius:24px;box-shadow:0 5px 0 #191A2B;
+  background-image:radial-gradient(rgba(255,255,255,.07) 1.3px, transparent 1.6px);background-size:20px 20px}
+.gen__head .logo{box-shadow:0 4px 0 rgba(0,0,0,.35);transform:rotate(-4deg)}
+.gen__title{text-shadow:none}
+.gen__hulp .hulpknop{color:#fff;border:2px solid rgba(255,255,255,.22);background:rgba(255,255,255,.08);box-shadow:0 3px 0 rgba(0,0,0,.25)}
+.gen__hulp .hulpknop:active{box-shadow:none}
+.qrwrap{border:2px solid var(--line);border-radius:20px}
+
+/* scanner close button */
+.scan__close{box-shadow:0 4px 0 rgba(0,0,0,.35)}
+.scan__close:active{transform:translateX(-50%) translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.35)}
+
+/* focus ring stays clearly visible */
+:focus-visible{outline:3px solid var(--sky);outline-offset:3px}
+
+/* whiteboard (e.g. 1366x768): keep the whole sum on one line inside the frame */
+@media (min-width:900px) and (min-height:600px){
+  .eq:not(.eq--split):not(.eq--vraag):not(.eq--word){flex-wrap:nowrap;gap:6px}
+  .eq .tile{min-width:60px;font-size:40px}
+  .eq .tile.op{width:24px;min-width:24px}
+}
+
+@media (prefers-reduced-motion: reduce){
+  .gen__head .logo{transform:none}
+}

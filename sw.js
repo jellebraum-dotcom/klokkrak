@@ -1,7 +1,7 @@
 /* Klokkrak service worker — app-shell cache voor offline gebruik */
-var CACHE = "klokkrak-v1";
+var CACHE = "klokkrak-v2";
 var ASSETS = [
-  "./", "index.html", "leerkracht.html", "klokkrak.css",
+  "./", "index.html", "leerkracht.html", "klokkrak.css", "krak-design.css", "fonts/nunito.woff2", "fonts/fredoka.woff2",
   "engine.js", "jsqr.js", "qrcode.js", "manifest.webmanifest",
   "icon-192.png", "icon-512.png", "icon-512-maskable.png", "apple-touch-icon.png"
 ];
